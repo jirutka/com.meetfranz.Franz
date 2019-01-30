@@ -1,0 +1,76 @@
+{
+    "app-id": "com.meetfranz.Franz",
+    "base": "org.electronjs.Electron2.BaseApp",
+    "base-version": "18.08",
+    "runtime": "org.freedesktop.Platform",
+    "runtime-version": "18.08",
+    "sdk": "org.freedesktop.Sdk",
+    "command": "franz",
+    "separate-locales": false,
+    "finish-args": [
+        "--share=ipc",
+        "--socket=x11",
+        "--socket=pulseaudio",
+        "--share=network",
+        "--device=all",
+        /* TODO: Figure out how to utilize Portal for open dialog and remove this. */
+        "--filesystem=home",
+        "--filesystem=xdg-run/dconf",
+        "--filesystem=~/.config/dconf:ro",
+        "--env=DCONF_USER_CONFIG_DIR=.config/dconf",
+        "--talk-name=ca.desrt.dconf",
+        "--talk-name=org.freedesktop.Notifications",
+        "--env=XDG_CURRENT_DESKTOP=Unity",
+        "--talk-name=org.kde.StatusNotifierWatcher"
+    ],
+    "modules": [
+        {
+            "name": "franz",
+            "buildsystem": "simple",
+            "build-commands": [
+                "install apply_extra /app/bin",
+                "install franz.sh /app/bin/franz",
+                "install -Dm644 com.meetfranz.Franz.appdata.xml /app/share/appdata/com.meetfranz.Franz.appdata.xml",
+                "cp /usr/bin/ar /app/bin",
+                "ARCH_TRIPLE=$(gcc --print-multiarch) && cp /usr/lib/${ARCH_TRIPLE}/libbfd-*.so /app/lib"
+            ],
+            "sources" : [
+                {
+                    "type": "script",
+                    "dest-filename": "apply_extra",
+                    "commands": [
+                        "ar x franz.deb",
+                        "rm -f franz.deb",
+                        "tar xf data.tar.xz",
+                        "rm -f control.tar.gz data.tar.xz debian-binary",
+                        "mv usr/* .",
+                        "chmod -R a-s,go+rX,go-w .",
+                        "rmdir usr",
+                        "mkdir -p export/share/applications",
+                        "sed -E 's|Icon=franz|Icon=com.meetfranz.Franz|; s|Exec=\"?/opt/Franz/franz\"?|Exec=franz|' share/applications/franz.desktop > export/share/applications/com.meetfranz.Franz.desktop",
+                        "mkdir -p export/share/icons/hicolor/512x512/apps",
+                        "cp share/icons/hicolor/512x512/apps/franz.png export/share/icons/hicolor/512x512/apps/com.meetfranz.Franz.png"
+                    ]
+                },
+                {
+                    "type": "script",
+                    "dest-filename": "franz.sh",
+                    "commands": ["exec env TMPDIR=$XDG_CACHE_HOME /app/extra/opt/Franz/franz \"$@\""]
+                },
+                {
+                    "type": "file",
+                    "path": "com.meetfranz.Franz.appdata.xml"
+                },
+                {
+                    "type": "extra-data",
+                    "filename": "franz.deb",
+                    "only-arches": ["x86_64"],
+                    "url": "https://github.com/meetfranz/franz/releases/download/v5.0.0-beta.22/franz_5.0.0-beta.22_amd64.deb",
+                    "sha256": "52444cf6c07283a6e4c2daa4ffa5d4176ae00018e48b34faa318936c3c666e51",
+                    "size": 63679522
+                }
+            ]
+        }
+    ]
+}
+
